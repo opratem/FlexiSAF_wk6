@@ -2,6 +2,7 @@ package com.flexisaf.FlexiSAF_wk6.controller;
 
 import com.flexisaf.FlexiSAF_wk6.entity.Employee;
 import com.flexisaf.FlexiSAF_wk6.repository.EmployeeRepository;
+import com.flexisaf.FlexiSAF_wk6.service.EmployeeService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -14,62 +15,59 @@ import java.util.Map;
 @RequestMapping("/api/employees")
 public class EmployeeController {
 
-    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
 
-    public EmployeeController(EmployeeRepository employeeRepository){
-        this.employeeRepository = employeeRepository;
+    public EmployeeController(EmployeeService employeeService){
+
+        this.employeeService = employeeService;
     }
 
     @GetMapping
     public List<Employee> getEmployees(){
-        return employeeRepository.findAll();
+
+        return employeeService.getAllEmployees();
     }
 
     @GetMapping("/{id}")
-    public Employee getEmployee(@PathVariable Long id){
-        return employeeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee with id " + id + " not found"));
+    public ResponseEntity<Employee> getEmployee(@PathVariable Long id){
+        return employeeService.getEmployeeById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public Employee createEmployee(@RequestBody Employee employee){
-        return employeeRepository.save(employee);
+    public ResponseEntity<Employee> createEmployee(@RequestBody Employee employee){
+        Employee createdEmployee = employeeService.createEmployee(employee);
+        return ResponseEntity.ok(createdEmployee);
     }
+
     @PutMapping("{id}")
     public ResponseEntity<Employee> updateEmployee(
             @PathVariable Long id,
             @RequestBody Employee updatedEmployee) {
-        return employeeRepository.findById(id)
-                .map(employee -> {
-                    employee.setFirstName(updatedEmployee.getFirstName());
-                    employee.setLastName(updatedEmployee.getLastName());
-                    employee.setEmail(updatedEmployee.getEmail());
-                    employee.setPhoneNumber(updatedEmployee.getPhoneNumber());
-                    employee.setDepartment(updatedEmployee.getDepartment());
-                    employee.setPosition(updatedEmployee.getPosition());
-                    employee.setSalary(updatedEmployee.getSalary());
-                    return ResponseEntity.ok(employeeRepository.save(employee));
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        try {
+            Employee savedEmployee = employeeService.updateEmployee(id, updatedEmployee);
+            return ResponseEntity.ok(savedEmployee);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<Employee> updatePartialEmployee(
             @PathVariable Long id,
             @RequestBody Map<String, Object> updates) {
+        try {
+            Employee updatedEmployee = employeeService.patchEmployee(id, updates);
+            return ResponseEntity.ok(updatedEmployee);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
-
-        updates.forEach((key, value) -> {
-            Field field = ReflectionUtils.findField(Employee.class, key);
-            if (field != null) {
-                field.setAccessible(true);
-                ReflectionUtils.setField(field, employee, value);
-            }
-        });
-
-        Employee updatedEmployee = employeeRepository.save(employee);
-        return ResponseEntity.ok(updatedEmployee);
+    @DeleteMapping
+    public ResponseEntity<Employee> deleteEmployee(@PathVariable Long id){
+        employeeService.deleteEmployee(id);
+        return ResponseEntity.noContent().build();
     }
 }

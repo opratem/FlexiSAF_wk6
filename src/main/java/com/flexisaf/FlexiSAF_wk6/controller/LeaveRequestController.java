@@ -3,6 +3,8 @@ package com.flexisaf.FlexiSAF_wk6.controller;
 
 import com.flexisaf.FlexiSAF_wk6.entity.LeaveRequest;
 import com.flexisaf.FlexiSAF_wk6.repository.LeaveRequestRepository;
+import com.flexisaf.FlexiSAF_wk6.service.LeaveRequestService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,19 +13,50 @@ import java.util.List;
 @RequestMapping("/api/leave_requests")
 public class LeaveRequestController {
 
-    private final LeaveRequestRepository leaveRequestRepository;
+    private final LeaveRequestService leaveRequestService;
 
-    public LeaveRequestController (LeaveRequestRepository leaveRequestRepository){
-        this.leaveRequestRepository = leaveRequestRepository;
+    public LeaveRequestController(LeaveRequestService leaveRequestService) {
+        this.leaveRequestService = leaveRequestService;
     }
 
     @GetMapping
     public List<LeaveRequest> getAllLeaveRequests() {
-        return leaveRequestRepository.findAll();
+        return leaveRequestService.getAllLeaveRequests();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<LeaveRequest> getLeaveRequest(@PathVariable Long id) {
+        return leaveRequestService.getLeaveRequestById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/employee/{employeeId")
+    public List<LeaveRequest> getByEmployee(@PathVariable Long employeeId) {
+        return leaveRequestService.getLeaveRequestByEmployee(employeeId);
     }
 
     @PostMapping
-    public LeaveRequest createLeaveRequest(@RequestBody LeaveRequest leaveRequest) {
-        return leaveRequestRepository.save(leaveRequest);
+    public ResponseEntity<LeaveRequest> createLeaveRequest(@RequestBody LeaveRequest leaveRequest) {
+        LeaveRequest createdLeaveRequest = leaveRequestService.createLeaveRequest(leaveRequest);
+        return ResponseEntity.ok(createdLeaveRequest);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<LeaveRequest> updateLeaveRequest(
+            @PathVariable Long id,
+            @RequestBody LeaveRequest updatedLeaveRequest) {
+        try {
+            LeaveRequest savedLeaveRequest = leaveRequestService.updateLeaveRequest(id, updatedLeaveRequest);
+            return ResponseEntity.ok(savedLeaveRequest);
+        } catch (RuntimeException ex) {
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteLeaveRequest(@PathVariable Long id) {
+        leaveRequestService.deleteLeaveRequest(id);
+        return ResponseEntity.notFound().build();
     }
 }
