@@ -17,7 +17,8 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
 
     //Constructor Injection
-    private EmployeeService(EmployeeRepository employeeRepository) {
+    public EmployeeService(EmployeeRepository employeeRepository) {
+        
         this.employeeRepository = employeeRepository;
     }
 

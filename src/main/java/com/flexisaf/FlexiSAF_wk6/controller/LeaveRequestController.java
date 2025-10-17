@@ -1,8 +1,6 @@
 package com.flexisaf.FlexiSAF_wk6.controller;
 
-
 import com.flexisaf.FlexiSAF_wk6.entity.LeaveRequest;
-import com.flexisaf.FlexiSAF_wk6.repository.LeaveRequestRepository;
 import com.flexisaf.FlexiSAF_wk6.service.LeaveRequestService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +29,8 @@ public class LeaveRequestController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/employee/{employeeId")
+    // ✅ Missing parenthesis fixed here
+    @GetMapping("/employee/{employeeId}")
     public List<LeaveRequest> getByEmployee(@PathVariable Long employeeId) {
         return leaveRequestService.getLeaveRequestByEmployee(employeeId);
     }
@@ -50,13 +49,13 @@ public class LeaveRequestController {
             LeaveRequest savedLeaveRequest = leaveRequestService.updateLeaveRequest(id, updatedLeaveRequest);
             return ResponseEntity.ok(savedLeaveRequest);
         } catch (RuntimeException ex) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteLeaveRequest(@PathVariable Long id) {
         leaveRequestService.deleteLeaveRequest(id);
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.noContent().build(); // ✅ Should return 204 No Content
     }
 }
